@@ -1,0 +1,14 @@
+[user]
+	name = Moritz Lumme
+	email = 46034439+m-lumme@users.noreply.github.com
+	username = m-lumme
+[core]
+	editor = vim
+[color]
+	ui = auto
+[init]
+	defaultBranch = main
+[diff]
+	tool = vim -d
+[merge]
+	tool = vim -d
