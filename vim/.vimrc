@@ -28,6 +28,9 @@ set noerrorbells
 set novisualbell
 set vb t_vb=
 
+" always display status line
+set laststatus=2
+
 " enable more powerful backspacing
 set backspace=indent,eol,start
 
@@ -83,11 +86,15 @@ autocmd BufReadPost *
     \ |   exe "normal! g`\""
     \ | endif
 
-" map <F2> to toggle line soft wrap
-nnoremap <F2> :set wrap! wrap?<CR>
+" map <F2> to toggle line numbers
+nnoremap <F2> :set number! number?<CR>
 imap <F2> <C-O><F2>
 
-" map <F3> to toggle overlines
+" map <F3> to toggle line soft wrap
+nnoremap <F3> :set wrap! wrap?<CR>
+imap <F3> <C-O><F3>
+
+" map <F4> to toggle overlines
 let s:overlines = 0
 fun! Toggle_overlines()
   if s:overlines == 0
@@ -101,9 +108,12 @@ fun! Toggle_overlines()
   endif
 endfun
 
-nnoremap <F3> :call Toggle_overlines()<CR>
-imap <F3> <C-O><F3>
-
-" map <F4> to toggle list mode
-nnoremap <F4> :set list! list?<CR>
+nnoremap <F4> :call Toggle_overlines()<CR>
 imap <F4> <C-O><F4>
+
+" set listchars, showbreak,
+" and map <F5> to toggle list mode
+set listchars=tab:>·,space:·,trail:!,precedes:<,extends:>,eol:$
+"let &showbreak = '> '
+nnoremap <F5> :set list! list?<CR>
+imap <F5> <C-O><F5>
