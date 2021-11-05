@@ -16,6 +16,12 @@ if has('mouse')
   set mouse=a
 endif
 
+" set cursor to
+" line in insert mode
+" block in normal mode
+let &t_SI = "\e[6 q"
+let &t_EI = "\e[2 q"
+
 " improve smootheness of redrawing
 set ttyfast
 
