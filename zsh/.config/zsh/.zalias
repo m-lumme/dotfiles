@@ -1,0 +1,10 @@
+# ls
+alias ls="ls --color=auto"
+alias l="ls -CF"
+alias ll="ls -lahF"
+
+# fs operations
+alias rm="rm -I"
+
+# grep
+alias grep="grep --color=auto"

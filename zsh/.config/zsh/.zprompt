@@ -1,0 +1,147 @@
+# prompt symbols
+declare -A p_sym
+p_sym[user]=">"
+p_sym[root]="#"
+
+# prompt colors
+autoload -Uz colors
+colors
+
+declare -A p_col
+p_col[host]=green
+p_col[cwd]=blue
+p_col[bg_jobs]=magenta
+p_col[ret_t]=default
+p_col[ret_f]=red
+p_col[git_dirty]=red
+p_col[git_unstaged]=yellow
+p_col[git_staged]=green
+p_col[git_repo]=grey
+p_col[git_branch]=default
+p_col[git_action]=magenta
+
+# left prompt
+PROMPT='$(prompt_host)$(prompt_cwd)$(prompt_bg)$(prompt_query)'
+
+# right prompt
+RPROMPT='$(prompt_git)'
+
+# prompt options
+setopt PROMPT_SUBST
+setopt TRANSIENT_RPROMPT
+
+# host
+prompt_host() {
+    echo -n "%{$fg_bold[$p_col[host]]%}%n@%m%{$reset_color%}:"
+}
+
+# cwd
+prompt_cwd() {
+    #echo -n "%{$fg_bold[$p_col[cwd]]%}%~%{$reset_color%}"
+    echo -n "%{$fg_bold[$p_col[cwd]]%}%(5~|%-1~/.../%3~|%4~)%{$reset_color%}"
+}
+
+# bg jobs
+prompt_bg() {
+    echo -n "%(1j.:.)%{$fg_bold[$p_col[bg_jobs]]%}%(1j.&%j.)"
+}
+
+function zle-line-init zle-keymap-select () {
+    case $KEYMAP in
+        vicmd) p_sym[user]="<";;
+        viins|main) p_sym[user]=">";;
+    esac
+    zle reset-prompt
+    zle -R
+}
+
+zle -N zle-keymap-select
+zle -N zle-line-init
+
+# prompt query
+prompt_query() {
+    local ret_str="%(?.%F{$p_col[ret_t]}.%F{$p_col[ret_f]})"
+    local p_sym_str="%(!.$p_sym[root].$p_sym[user])"
+    echo -n "$ret_str$p_sym_str%f "
+}
+
+# git status
+prompt_git() {
+    echo -n "$vcs_info_msg_0_"
+}
+
+[[ $USERNAME != "root" ]] && {
+
+    # async helper functions
+    _vcs_async_start() {
+        async_start_worker vcs_info
+        async_register_callback vcs_info _vcs_info_done
+    }
+
+    _vcs_info_wrapper() {
+        cd -q $1
+        vcs_info
+        print ${vcs_info_msg_0_}
+    }
+
+    _vcs_info_done() {
+        local job=$1
+        local return_code=$2
+        local stdout=$3
+        local more=$6
+        if [[ $job == "[async]" ]]; then
+            if [[ $return_code -eq 2 ]]; then
+                _vcs_async_start
+                return
+            fi
+        fi
+        vcs_info_msg_0_=$stdout
+        [[ $more == 1 ]] || zle reset-prompt
+    }
+
+    zmodload zsh/stat
+    autoload -Uz add-zsh-hook
+
+    autoload -Uz vcs_info
+    zstyle ':vcs_info:*' enable git
+
+    () {
+        local repo_str="%{${fg_bold[${p_col[git_repo]}]}%}%r"
+        local branch_str="%{${fg_bold[${p_col[git_branch]}]}%}%b"
+        local action_str="%{${fg_bold[${p_col[git_action]}]}%}%a"
+        local clr="%{${reset_color}%}"
+        local formats="$repo_str:$branch_str%u%c$clr"
+        local actionformats="$repo_str:$branch_str%u%c%:$action_str$clr"
+        local stagedstr="%{${fg_bold[${p_col[git_staged]}]}%}+$clr"
+        local unstagedstr="%{${fg_bold[${p_col[git_unstaged]}]}%}!$clr"
+        local dirtystr="%{${fg_bold[${p_col[git_dirty]}]}%}*$clr"
+        zstyle ':vcs_info:*:*' formats $formats
+        zstyle ':vcs_info:*:*' actionformats $actionformats
+        zstyle ':vcs_info:*:*' stagedstr $stagedstr
+        zstyle ':vcs_info:*:*' unstagedstr $unstagedstr
+        zstyle -e ':vcs_info:*:*' check-for-changes \
+        '[[ $(zstat +blocks $PWD) -ne 0 ]] && reply=( true ) || reply=( false )'
+
+        zstyle ':vcs_info:git*+set-message:*' hooks git-untracked
+
+            +vi-git-untracked(){
+                [[ $(zstat +blocks $PWD) -ne 0 ]] || return
+                if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) \
+                    == 'true' ]] \
+                    && git status --porcelain 2> /dev/null | grep -q '??' ; then
+                    hook_com[branch]+="%{${fg_bold[${p_col[git_dirty]}]}%}*$clr"
+                fi
+            }
+
+    }
+
+    source $ZDOTDIR/zplugins/zsh-async/async.zsh
+    async_init
+    _vcs_async_start
+    add-zsh-hook precmd () {
+        async_job vcs_info _vcs_info_wrapper $PWD
+    }
+    add-zsh-hook chpwd () {
+        vcs_info_msg_0_=
+    }
+}
