@@ -61,7 +61,7 @@ autoload -Uz compinit
 if [[ -n $XDG_STATE_HOME/zsh/.zcompdump(#qN.mh+24) ]]; then
     compinit -d "$XDG_STATE_HOME/zsh/.zcompdump"
 else
-    compinit -C
+    compinit -C -d "$XDG_STATE_HOME/zsh/.zcompdump"
 fi
 
 # load complist for menu select
