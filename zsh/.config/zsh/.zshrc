@@ -52,12 +52,17 @@ setopt MULTIOS                  # implicit tees/cats for multiple redirections
 setopt LONG_LIST_JOBS           # long format for job notifications
 
 ## completion
-# call compinit
 if [ ! -d "$XDG_STATE_HOME/zsh" ]; then
     mkdir -p $XDG_STATE_HOME/zsh
 fi
+# call compinit
+# only update completion once a day
 autoload -Uz compinit
-compinit -d "$XDG_STATE_HOME/zsh/.zcompdump"
+if [[ -n $XDG_STATE_HOME/zsh/.zcompdump(#qN.mh+24) ]]; then
+    compinit -d "$XDG_STATE_HOME/zsh/.zcompdump"
+else
+    compinit -C
+fi
 
 # load complist for menu select
 zmodload zsh/complist
