@@ -120,6 +120,10 @@ fi
 bindkey -v
 export KEYTIMEOUT=1
 
+# convenient line navigation
+bindkey '^[[H' beginning-of-line
+bindkey '^[[F' end-of-line
+
 # edit current command line in vim
 autoload -Uz edit-command-line
 zle -N edit-command-line
